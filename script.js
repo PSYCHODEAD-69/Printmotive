@@ -149,10 +149,28 @@ async function loadFeaturedReviews() {
       const stars    = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
       const initials = r.name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
       const date     = new Date(r.createdAt).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" });
+
+      // Media preview button if review has attachment
+      let mediaBtn = "";
+      if (r.mediaUrl) {
+        if (r.mediaType === "video") {
+          mediaBtn = `<button class="tc-media-btn" onclick="openFeaturedMedia('${r.mediaUrl}','video')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            View Video
+          </button>`;
+        } else {
+          mediaBtn = `<button class="tc-media-btn" onclick="openFeaturedMedia('${r.mediaUrl}','image')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            View Photo
+          </button>`;
+        }
+      }
+
       return `
         <div class="testi-card fade-up">
           <div class="tc-stars">${stars}</div>
           <p class="tc-text">"${escapeHtml(r.text)}"</p>
+          ${mediaBtn}
           <div class="tc-author">
             <div class="tc-avatar">${initials}</div>
             <div>
@@ -174,8 +192,57 @@ async function loadFeaturedReviews() {
 }
 
 /* ══════════════════════════════════════
-   LINK BUILDERS
+   FEATURED REVIEW MEDIA LIGHTBOX
    ══════════════════════════════════════ */
+function openFeaturedMedia(url, type) {
+  const old = document.getElementById("pm-media-lb");
+  if (old) old.remove();
+
+  const lb = document.createElement("div");
+  lb.id = "pm-media-lb";
+  lb.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;transition:opacity .25s;";
+
+  lb.innerHTML = type === "video"
+    ? `<video src="${url}" controls autoplay playsinline style="max-width:92vw;max-height:92vh;border-radius:12px;"></video>`
+    : `<img src="${url}" style="max-width:92vw;max-height:92vh;border-radius:12px;object-fit:contain;">`;
+
+  const closeBtn = document.createElement("button");
+  closeBtn.innerHTML = "&times;";
+  closeBtn.style.cssText = "position:absolute;top:20px;right:24px;background:none;border:none;color:white;font-size:2.5rem;cursor:pointer;line-height:1;z-index:1;";
+  lb.appendChild(closeBtn);
+
+  document.body.appendChild(lb);
+  document.body.style.overflow = "hidden";
+  requestAnimationFrame(() => lb.style.opacity = "1");
+
+  function close() {
+    lb.style.opacity = "0";
+    document.body.style.overflow = "";
+    setTimeout(() => lb.remove(), 250);
+  }
+  closeBtn.addEventListener("click", close);
+  lb.addEventListener("click", e => { if (e.target === lb) close(); });
+  document.addEventListener("keydown", function esc(e) {
+    if (e.key === "Escape") { close(); document.removeEventListener("keydown", esc); }
+  });
+}
+
+// Inject tc-media-btn CSS once
+(function() {
+  const s = document.createElement("style");
+  s.textContent = `
+    .tc-media-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: none; border: 1.5px solid var(--border);
+      border-radius: 20px; padding: 5px 12px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.78rem;
+      font-weight: 600; color: var(--ink2); cursor: pointer;
+      margin-bottom: 12px; transition: all .2s;
+    }
+    .tc-media-btn:hover { border-color: var(--accent); color: var(--accent); }
+  `;
+  document.head.appendChild(s);
+})();
 function buildWALink(product, price, desc) {
   const msg = [
     `Hello ${BRAND_NAME}!`,
