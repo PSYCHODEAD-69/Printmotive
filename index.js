@@ -234,7 +234,8 @@ async function addProducts(request, env) {
     description: p.description || "",
     category:    p.category    || "accessories",
     badge:       p.badge       || "",
-    imageUrl:    p.imageUrl    || "",  // R2 URL or external URL
+    imageUrl:    p.imageUrl    || "",
+    r2Key:       p.r2Key       || extractR2Key(p.imageUrl) || null,
     createdAt:   now,
   }));
   const updated = [...products, ...newProds];
@@ -250,8 +251,9 @@ async function editProduct(request, env, id) {
   products[idx]  = {
     ...products[idx],
     ...updates,
-    id, // preserve id
+    id,
     priceNum: parseInt((updates.price || products[idx].price || "0").replace(/[^0-9]/g, "")) || 0,
+    r2Key: updates.r2Key || extractR2Key(updates.imageUrl) || products[idx].r2Key || null,
   };
   await env.PM_KV.put("products", JSON.stringify(products));
   return JSON.stringify({ success: true, product: products[idx] });
@@ -262,9 +264,12 @@ async function deleteProduct(env, id) {
   const product  = products.find(p => p.id === id);
   if (!product) return JSON.stringify({ error: "Product not found" });
 
-  // Delete R2 image if it's an R2 file (not external URL)
-  if (product.imageUrl && product.r2Key) {
-    try { await env.PM_R2.delete(product.r2Key); } catch {}
+  // Extract R2 key from imageUrl if r2Key not stored
+  // R2 URLs: https://assets.psychodead.qzz.io/products/file.jpg
+  // Worker URLs: https://printmotive-worker.devpandey618.workers.dev/files/products/file.jpg
+  const r2Key = product.r2Key || extractR2Key(product.imageUrl);
+  if (r2Key) {
+    try { await env.PM_R2.delete(r2Key); } catch {}
   }
 
   const updated = products.filter(p => p.id !== id);
@@ -416,9 +421,14 @@ async function getReviews(env) {
 
 async function deleteReview(env, id) {
   const review = await env.PM_KV.get(`review:${id}`, "json");
-  if (review?.mediaKey) {
-    try { await env.PM_R2.delete(review.mediaKey); } catch {}
+  if (!review) return JSON.stringify({ error: "Review not found" });
+
+  // Extract R2 key from mediaUrl if mediaKey not stored
+  const r2Key = review.mediaKey || extractR2Key(review.mediaUrl);
+  if (r2Key) {
+    try { await env.PM_R2.delete(r2Key); } catch {}
   }
+
   await env.PM_KV.delete(`review:${id}`);
   const index   = await env.PM_KV.get("reviews:index", "json") || [];
   const updated = index.filter(i => i !== id);
@@ -432,4 +442,21 @@ async function deleteReview(env, id) {
 function sanitize(str) {
   if (typeof str !== "string") return "";
   return str.replace(/</g, "&lt;").replace(/>/g, "&gt;").trim().slice(0, 500);
+}
+
+/* ──────────────────────────────────────
+   EXTRACT R2 KEY FROM URL
+   Handles both:
+   - https://assets.psychodead.qzz.io/products/file.jpg  → products/file.jpg
+   - https://printmotive-worker.devpandey618.workers.dev/files/products/file.jpg → products/file.jpg
+────────────────────────────────────── */
+function extractR2Key(url) {
+  if (!url) return null;
+  // Custom domain: assets.psychodead.qzz.io/KEY
+  const customMatch = url.match(/assets\.psychodead\.qzz\.io\/(.+)/);
+  if (customMatch) return customMatch[1];
+  // Worker /files/ endpoint: /files/KEY
+  const workerMatch = url.match(/\/files\/(.+)/);
+  if (workerMatch) return workerMatch[1];
+  return null;
 }
