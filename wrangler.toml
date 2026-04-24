@@ -1,0 +1,20 @@
+name = "printmotive-worker"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "PM_KV"
+id = "REPLACE_WITH_YOUR_KV_ID"
+
+[[r2_buckets]]
+binding  = "PM_R2"
+bucket_name = "printmotive-assets"
+
+[vars]
+ALLOWED_ORIGIN = "https://YOUR_GITHUB_USERNAME.github.io"
+R2_PUBLIC_URL  = "https://YOUR_R2_PUBLIC_DOMAIN"
+
+# Secrets (set via: wrangler secret put ADMIN_USERNAME)
+# ADMIN_USERNAME
+# ADMIN_PASSWORD
+# JWT_SECRET

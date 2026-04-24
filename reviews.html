@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reviews — PrintMotive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* ── REVIEWS PAGE SPECIFIC ── */
+    .reviews-page-hero {
+      padding: 120px 5vw 60px;
+      background: var(--bg);
+      text-align: center;
+    }
+    .reviews-page-hero .sec-tag { margin: 0 auto 12px; }
+    .reviews-page-hero h1 { font-family: var(--font-display); font-size: clamp(2rem,5vw,3.5rem); margin: 0 0 12px; }
+    .reviews-page-hero p { color: var(--muted); font-size: 1.05rem; }
+
+    /* ── ADD REVIEW FORM ── */
+    .add-review-section {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 2.5rem;
+      max-width: 640px;
+      margin: 0 auto 3rem;
+    }
+    .add-review-section h2 { font-family: var(--font-display); font-size: 1.6rem; margin: 0 0 1.5rem; }
+
+    .star-picker { display: flex; gap: 8px; margin-bottom: 1.2rem; }
+    .star-picker .sp { font-size: 2rem; cursor: pointer; color: #ddd; transition: color .15s, transform .15s; line-height:1; user-select:none; }
+    .star-picker .sp.active, .star-picker .sp.hover { color: #f5a623; transform: scale(1.15); }
+
+    .rev-input {
+      width: 100%; box-sizing: border-box;
+      background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 12px 14px;
+      font-family: var(--font-body); font-size: 0.95rem;
+      color: var(--text); outline: none; transition: border-color .2s;
+      margin-bottom: 1rem;
+    }
+    .rev-input:focus { border-color: var(--accent); }
+    textarea.rev-input { resize: vertical; min-height: 90px; }
+
+    .file-upload-area {
+      border: 2px dashed var(--border); border-radius: 12px;
+      padding: 1.5rem; text-align: center; cursor: pointer;
+      transition: border-color .2s, background .2s; margin-bottom: 1rem;
+      background: var(--bg);
+    }
+    .file-upload-area:hover { border-color: var(--accent); background: rgba(255,77,46,.04); }
+    .file-upload-area.drag-over { border-color: var(--accent); background: rgba(255,77,46,.08); }
+    .file-upload-area input { display: none; }
+    .file-upload-area .fup-icon { font-size: 2rem; margin-bottom: 8px; }
+    .file-upload-area .fup-text { font-size: 0.9rem; color: var(--muted); }
+    .file-upload-area .fup-text span { color: var(--accent); font-weight: 600; }
+
+    .file-preview-wrap { margin-bottom: 1rem; }
+    .file-preview-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 8px;
+    }
+    .file-preview-item img, .file-preview-item video {
+      width: 56px; height: 56px; object-fit: cover; border-radius: 8px; flex-shrink: 0;
+    }
+    .fpi-name { flex: 1; font-size: 0.88rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fpi-remove { background: none; border: none; color: #f44; cursor: pointer; font-size: 1.2rem; padding: 0 4px; }
+
+    .submit-review-btn {
+      width: 100%; padding: 14px; background: var(--accent);
+      color: white; border: none; border-radius: 12px;
+      font-family: var(--font-body); font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: opacity .2s, transform .1s;
+    }
+    .submit-review-btn:hover { opacity: .88; }
+    .submit-review-btn:active { transform: scale(.98); }
+    .submit-review-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── ALL REVIEWS GRID ── */
+    .all-reviews-section { max-width: 1100px; margin: 0 auto; padding: 0 5vw 4rem; }
+    .all-reviews-section h2 { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 2rem; }
+
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .review-card {
+      background: var(--surface); border-radius: 16px;
+      padding: 1.5rem; border: 1px solid var(--border);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .review-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,.08); }
+
+    .rc-stars { color: #f5a623; font-size: 1.1rem; margin-bottom: 8px; letter-spacing: 2px; }
+    .rc-text { font-size: 0.95rem; color: var(--text); line-height: 1.6; margin-bottom: 1rem; }
+    .rc-author { display: flex; align-items: center; gap: 10px; }
+    .rc-av {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--accent); color: white; display: flex;
+      align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+    }
+    .rc-name { font-weight: 600; font-size: 0.9rem; }
+    .rc-date { font-size: 0.78rem; color: var(--muted); }
+
+    /* Media preview in review card */
+    .rc-media { margin-bottom: 1rem; border-radius: 12px; overflow: hidden; }
+    .rc-media img {
+      width: 100%; max-height: 220px; object-fit: cover;
+      cursor: pointer; transition: transform .3s;
+    }
+    .rc-media img:hover { transform: scale(1.02); }
+    .rc-media video { width: 100%; max-height: 220px; border-radius: 12px; }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed; inset: 0; background: rgba(0,0,0,.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .lightbox.open { opacity: 1; pointer-events: all; }
+    .lightbox img { max-width: 92vw; max-height: 92vh; border-radius: 12px; }
+    .lightbox-close {
+      position: absolute; top: 20px; right: 24px;
+      background: none; border: none; color: white;
+      font-size: 2.5rem; cursor: pointer; line-height: 1;
+    }
+
+    /* Upload progress */
+    .upload-progress { margin-bottom: 1rem; }
+    .up-bar-wrap { background: var(--border); border-radius: 8px; height: 6px; overflow: hidden; }
+    .up-bar { height: 100%; background: var(--accent); border-radius: 8px; transition: width .3s; width: 0%; }
+    .up-label { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+
+    /* Loading states */
+    .reviews-loading { text-align: center; padding: 3rem; color: var(--muted); }
+    .no-reviews { text-align: center; padding: 3rem; color: var(--muted); }
+
+    .reviews-cta-bottom {
+      text-align: center; margin-top: 3rem; padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 600px) {
+      .add-review-section { padding: 1.5rem; }
+      .reviews-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- FLOATING WHATSAPP -->
+  <a href="#" class="float-wa" id="floatWA" title="Order on WhatsApp">
+    <div class="float-wa-ring"></div>
+    <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <a href="index.html" class="nav-logo">
+      <img src="https://i.ibb.co/ZpgV2Z4Z/IMG-20260410-WA0002.jpg" class="logo-icon" width="44" height="44">
+      <span class="logo-text">Print<em>Motive</em></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html#products">Products</a></li>
+      <li><a href="index.html#how">Process</a></li>
+      <li><a href="reviews.html" style="color:var(--accent)">Reviews</a></li>
+      <li><a href="index.html#contacts">Contact us</a></li>
+      <li><a href="index.html#products" class="nav-cta">Order Now</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="drawer" id="drawer">
+      <button class="drawer-close" id="drawerClose" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="24" height="24">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <div class="drawer-logo">Print<em>Motive</em></div>
+      <ul class="drawer-links">
+        <li><a href="index.html#products" class="dl">Products</a></li>
+        <li><a href="index.html#how" class="dl">Process</a></li>
+        <li><a href="reviews.html" class="dl">Reviews</a></li>
+        <li><a href="index.html#contacts" class="dl">Contact us</a></li>
+        <li><a href="index.html#products" class="dl dl-cta">Order Now</a></li>
+      </ul>
+    </div>
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  </nav>
+
+  <!-- PAGE HERO -->
+  <div class="reviews-page-hero">
+    <div class="sec-tag">Customer Reviews</div>
+    <h1>What Our <span class="red">Customers</span> Say</h1>
+    <p>Real reviews from real people who ordered from PrintMotive.</p>
+  </div>
+
+  <!-- ADD REVIEW FORM -->
+  <div style="padding: 0 5vw; max-width: 1100px; margin: 0 auto;">
+    <div class="add-review-section" id="addReviewSection">
+      <h2>✍️ Share Your Experience</h2>
+
+      <!-- Star Rating -->
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:.9rem;color:var(--muted);display:block;margin-bottom:6px;">Your Rating *</label>
+        <div class="star-picker" id="starPicker">
+          <span class="sp" data-val="1">★</span>
+          <span class="sp" data-val="2">★</span>
+          <span class="sp" data-val="3">★</span>
+          <span class="sp" data-val="4">★</span>
+          <span class="sp" data-val="5">★</span>
+        </div>
+      </div>
+
+      <input type="text" class="rev-input" id="revName" placeholder="Your Name *" maxlength="60" autocomplete="name"/>
+      <textarea class="rev-input" id="revText" placeholder="Tell us about your experience... *" maxlength="1000"></textarea>
+
+      <!-- File Upload -->
+      <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('revFile').click()">
+        <input type="file" id="revFile" accept="image/*,video/*" multiple/>
+        <div class="fup-icon">📎</div>
+        <div class="fup-text">
+          <span>Click or drag</span> to attach photo/video (optional)<br>
+          <small>Max 40MB per file · JPG, PNG, GIF, MP4, MOV</small>
+        </div>
+      </div>
+
+      <!-- File Preview -->
+      <div class="file-preview-wrap" id="filePreviewWrap"></div>
+
+      <!-- Upload Progress -->
+      <div class="upload-progress" id="uploadProgress" style="display:none">
+        <div class="up-bar-wrap"><div class="up-bar" id="upBar"></div></div>
+        <div class="up-label" id="upLabel">Uploading...</div>
+      </div>
+
+      <button class="submit-review-btn" id="submitReviewBtn" onclick="submitReview()">
+        Submit Review
+      </button>
+    </div>
+  </div>
+
+  <!-- ALL REVIEWS -->
+  <div class="all-reviews-section">
+    <h2 id="reviewsHeading">All Reviews</h2>
+
+    <div class="reviews-loading" id="reviewsLoading">
+      <div class="product-skeleton" style="height:200px;border-radius:16px;margin-bottom:1rem;"></div>
+      <div class="product-skeleton" style="height:200px;border-radius:16px;margin-bottom:1rem;"></div>
+      <div class="product-skeleton" style="height:200px;border-radius:16px;"></div>
+    </div>
+
+    <div class="reviews-grid" id="reviewsGrid" style="display:none"></div>
+
+    <div class="no-reviews" id="noReviews" style="display:none">
+      <p style="font-size:1.1rem;">No reviews yet. Be the first to review!</p>
+    </div>
+
+    <!-- Bottom CTA -->
+    <div class="reviews-cta-bottom">
+      <p style="color:var(--muted);margin-bottom:1rem;">Had a great experience? Let others know!</p>
+      <button class="btn-primary" onclick="scrollToForm()" style="display:inline-flex;align-items:center;gap:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="17" height="17"><path d="M12 5v14M5 12h14"/></svg>
+        Add Your Review
+      </button>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <img id="lightboxImg" src="" alt="Preview"/>
+  </div>
+
+  <script>
+    const API = window.PM_API_URL || 'REPLACE_WITH_WORKER_URL';
+    let selectedRating = 0;
+    let selectedFiles  = [];
+
+    /* ── INIT ── */
+    document.addEventListener('DOMContentLoaded', () => {
+      initNavbar();
+      initHamburger();
+      initWALinks();
+      loadReviews();
+      initStarPicker();
+      initFileUpload();
+
+      // If ?focus=add in URL, scroll to form and focus name input
+      if (new URLSearchParams(location.search).get('focus') === 'add') {
+        setTimeout(() => {
+          document.getElementById('addReviewSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => document.getElementById('revName').focus(), 600);
+        }, 300);
+      }
+    });
+
+    function scrollToForm() {
+      document.getElementById('addReviewSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => document.getElementById('revName').focus(), 500);
+    }
+
+    /* ── STAR PICKER ── */
+    function initStarPicker() {
+      const stars = document.querySelectorAll('.sp');
+      stars.forEach(s => {
+        s.addEventListener('mouseenter', () => {
+          const v = parseInt(s.dataset.val);
+          stars.forEach(x => x.classList.toggle('hover', parseInt(x.dataset.val) <= v));
+        });
+        s.addEventListener('mouseleave', () => {
+          stars.forEach(x => x.classList.remove('hover'));
+        });
+        s.addEventListener('click', () => {
+          selectedRating = parseInt(s.dataset.val);
+          stars.forEach(x => x.classList.toggle('active', parseInt(x.dataset.val) <= selectedRating));
+        });
+      });
+    }
+
+    /* ── FILE UPLOAD ── */
+    function initFileUpload() {
+      const area = document.getElementById('fileUploadArea');
+      const inp  = document.getElementById('revFile');
+
+      inp.addEventListener('change', e => handleFiles(e.target.files));
+
+      area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
+      area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
+      area.addEventListener('drop', e => {
+        e.preventDefault(); area.classList.remove('drag-over');
+        handleFiles(e.dataTransfer.files);
+      });
+    }
+
+    function handleFiles(files) {
+      Array.from(files).forEach(file => {
+        if (file.size > 40 * 1024 * 1024) {
+          showToast(`${file.name} is too large (max 40MB)`); return;
+        }
+        if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+          showToast('Only images and videos allowed'); return;
+        }
+        selectedFiles.push(file);
+      });
+      renderFilePreviews();
+    }
+
+    function renderFilePreviews() {
+      const wrap = document.getElementById('filePreviewWrap');
+      wrap.innerHTML = '';
+      selectedFiles.forEach((file, idx) => {
+        const item = document.createElement('div');
+        item.className = 'file-preview-item';
+        const isVideo = file.type.startsWith('video/');
+        const url = URL.createObjectURL(file);
+        item.innerHTML = `
+          ${isVideo
+            ? `<video src="${url}" muted style="width:56px;height:56px;object-fit:cover;border-radius:8px;"></video>`
+            : `<img src="${url}" alt="preview" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">`}
+          <span class="fpi-name">${file.name}</span>
+          <span style="font-size:.78rem;color:var(--muted);flex-shrink:0;">${(file.size/1024/1024).toFixed(1)}MB</span>
+          <button class="fpi-remove" onclick="removeFile(${idx})">✕</button>
+        `;
+        wrap.appendChild(item);
+      });
+    }
+
+    function removeFile(idx) {
+      selectedFiles.splice(idx, 1);
+      renderFilePreviews();
+    }
+
+    /* ── SUBMIT REVIEW ── */
+    async function submitReview() {
+      const name   = document.getElementById('revName').value.trim();
+      const text   = document.getElementById('revText').value.trim();
+      const btn    = document.getElementById('submitReviewBtn');
+
+      if (!selectedRating) { showToast('Please select a star rating!'); return; }
+      if (!name)           { showToast('Please enter your name!'); document.getElementById('revName').focus(); return; }
+      if (!text)           { showToast('Please write your review!'); document.getElementById('revText').focus(); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      let mediaUrl  = null;
+      let mediaKey  = null;
+      let mediaType = null;
+
+      // Upload file if selected (first file only)
+      if (selectedFiles.length > 0) {
+        const file = selectedFiles[0];
+        try {
+          const result = await uploadReviewMedia(file);
+          mediaUrl  = result.url;
+          mediaKey  = result.key;
+          mediaType = file.type.startsWith('video/') ? 'video' : 'image';
+        } catch (err) {
+          showToast('File upload failed. Submitting without media.');
+        }
+      }
+
+      try {
+        const res = await fetch(`${API}/api/reviews`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, rating: selectedRating, text, mediaUrl, mediaKey, mediaType })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showToast('✓ Review submitted! Thank you!');
+          // Reset form
+          document.getElementById('revName').value = '';
+          document.getElementById('revText').value = '';
+          selectedRating = 0;
+          selectedFiles  = [];
+          document.querySelectorAll('.sp').forEach(s => s.classList.remove('active'));
+          document.getElementById('filePreviewWrap').innerHTML = '';
+          document.getElementById('revFile').value = '';
+          // Prepend new review
+          prependReview(data.review);
+        } else {
+          showToast(data.error || 'Submission failed. Please try again.');
+        }
+      } catch {
+        showToast('Network error. Please try again.');
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Submit Review';
+    }
+
+    async function uploadReviewMedia(file) {
+      const prog  = document.getElementById('uploadProgress');
+      const bar   = document.getElementById('upBar');
+      const label = document.getElementById('upLabel');
+      prog.style.display = 'block';
+
+      // Use XHR for progress tracking
+      return new Promise((resolve, reject) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', 'reviews');
+
+        const xhr = new XMLHttpRequest();
+        const token = localStorage.getItem('pm_token') || '';
+
+        xhr.upload.addEventListener('progress', e => {
+          if (e.lengthComputable) {
+            const pct = Math.round(e.loaded / e.total * 100);
+            bar.style.width  = pct + '%';
+            label.textContent = `Uploading... ${pct}%`;
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          prog.style.display = 'none';
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.success) resolve(data);
+            else reject(new Error(data.error));
+          } catch { reject(new Error('Upload failed')); }
+        });
+
+        xhr.addEventListener('error', () => { prog.style.display = 'none'; reject(new Error('Network error')); });
+
+        xhr.open('POST', `${API}/api/upload/review-media`);
+        // Public endpoint — no auth needed for review media
+        xhr.send(formData);
+      });
+    }
+
+    /* ── LOAD REVIEWS ── */
+    async function loadReviews() {
+      try {
+        const res     = await fetch(`${API}/api/reviews`);
+        const reviews = await res.json();
+
+        document.getElementById('reviewsLoading').style.display = 'none';
+
+        if (!reviews.length) {
+          document.getElementById('noReviews').style.display = 'block';
+          document.getElementById('reviewsHeading').textContent = 'Reviews (0)';
+          return;
+        }
+
+        document.getElementById('reviewsHeading').textContent = `All Reviews (${reviews.length})`;
+        const grid = document.getElementById('reviewsGrid');
+        grid.style.display = 'grid';
+        grid.innerHTML = reviews.map(r => renderReviewCard(r)).join('');
+
+      } catch {
+        document.getElementById('reviewsLoading').style.display = 'none';
+        document.getElementById('noReviews').style.display = 'block';
+        document.getElementById('noReviews').innerHTML = '<p>Could not load reviews. Please refresh.</p>';
+      }
+    }
+
+    function renderReviewCard(r) {
+      const stars   = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+      const initials= r.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+      const date    = new Date(r.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+
+      let mediaHtml = '';
+      if (r.mediaUrl) {
+        if (r.mediaType === 'video') {
+          mediaHtml = `<div class="rc-media"><video src="${r.mediaUrl}" controls preload="metadata" playsinline></video></div>`;
+        } else {
+          mediaHtml = `<div class="rc-media"><img src="${r.mediaUrl}" alt="Review photo" loading="lazy" onclick="openLightbox('${r.mediaUrl}')"></div>`;
+        }
+      }
+
+      return `
+        <div class="review-card fade-up" data-review-id="${r.id}">
+          <div class="rc-stars">${stars}</div>
+          ${mediaHtml}
+          <p class="rc-text">"${escapeHtml(r.text)}"</p>
+          <div class="rc-author">
+            <div class="rc-av">${initials}</div>
+            <div>
+              <div class="rc-name">${escapeHtml(r.name)}</div>
+              <div class="rc-date">${date}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function prependReview(r) {
+      const grid = document.getElementById('reviewsGrid');
+      grid.style.display = 'grid';
+      document.getElementById('noReviews').style.display = 'none';
+      grid.insertAdjacentHTML('afterbegin', renderReviewCard(r));
+      // Update heading count
+      const current = parseInt(document.getElementById('reviewsHeading').textContent.match(/\d+/)?.[0] || 0);
+      document.getElementById('reviewsHeading').textContent = `All Reviews (${current + 1})`;
+    }
+
+    /* ── LIGHTBOX ── */
+    function openLightbox(src) {
+      document.getElementById('lightboxImg').src = src;
+      document.getElementById('lightbox').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    /* ── HELPERS ── */
+    function escapeHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function showToast(msg) {
+      let t = document.getElementById('pm-toast');
+      if (!t) { t = document.createElement('div'); t.id = 'pm-toast'; t.className = 'toast'; document.body.appendChild(t); }
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    /* ── NAVBAR / WA ── */
+    function initNavbar() {
+      const nav = document.getElementById('navbar');
+      if (!nav) return;
+      const update = () => nav.classList.toggle('scrolled', window.scrollY > 50);
+      window.addEventListener('scroll', update, { passive: true }); update();
+    }
+    function initHamburger() {
+      const btn = document.getElementById('hamburger');
+      const drawer = document.getElementById('drawer');
+      const backdrop = document.getElementById('drawerBackdrop');
+      const closeBtn = document.getElementById('drawerClose');
+      if (!btn) return;
+      const open = () => { drawer.classList.add('open'); backdrop.classList.add('open'); btn.classList.add('open'); document.body.style.overflow = 'hidden'; };
+      const close = () => { drawer.classList.remove('open'); backdrop.classList.remove('open'); btn.classList.remove('open'); document.body.style.overflow = ''; };
+      btn.addEventListener('click', () => drawer.classList.contains('open') ? close() : open());
+      backdrop.addEventListener('click', close);
+      if (closeBtn) closeBtn.addEventListener('click', close);
+      document.querySelectorAll('.dl').forEach(a => a.addEventListener('click', close));
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+    function initWALinks() {
+      const msg = encodeURIComponent(`Hello PrintMotive.in!\n\nI'd like to enquire about your custom printing services.\nPlease help me get started!\n\n(Sent from printmotive.in)`);
+      const link = `https://wa.me/916267159304?text=${msg}`;
+      ['floatWA','footerWA'].forEach(id => { const el = document.getElementById(id); if(el) el.href = link; });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Migrate Products — PrintMotive (ONE TIME USE)</title>
+  <style>
+    body { font-family: monospace; background: #0a0a0a; color: #f0f0f0; padding: 2rem; max-width: 700px; margin: 0 auto; }
+    h1 { color: #ff4d2e; margin-bottom: .5rem; }
+    .warn { background: #1c1001; border: 1px solid #f5a623; border-radius: 8px; padding: 1rem; margin-bottom: 2rem; color: #f5a623; }
+    input { width: 100%; box-sizing: border-box; background: #141414; border: 1px solid #333; border-radius: 8px; padding: 10px 14px; color: #f0f0f0; font-family: monospace; font-size: .9rem; margin-bottom: 1rem; outline: none; }
+    input:focus { border-color: #ff4d2e; }
+    button { background: #ff4d2e; color: white; border: none; border-radius: 10px; padding: 12px 28px; font-size: 1rem; font-family: monospace; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    #log { background: #0f0f0f; border: 1px solid #222; border-radius: 8px; padding: 1rem; margin-top: 1.5rem; min-height: 120px; white-space: pre-wrap; font-size: .85rem; line-height: 1.6; }
+    .ok  { color: #22c55e; }
+    .err { color: #ef4444; }
+    .info{ color: #f5a623; }
+  </style>
+</head>
+<body>
+  <h1>🚚 PrintMotive — Product Migration</h1>
+  <div class="warn">
+    ⚠️ ONE-TIME USE ONLY. Run this once, then delete this file from your repo.
+    <br>This will push 21 existing products to your Cloudflare KV.
+  </div>
+
+  <label>Worker URL (e.g. https://printmotive-worker.yourname.workers.dev)</label>
+  <input type="text" id="workerUrl" placeholder="https://printmotive-worker.YOUR_NAME.workers.dev"/>
+
+  <label>Admin Username</label>
+  <input type="text" id="adminUser" placeholder="your admin username"/>
+
+  <label>Admin Password</label>
+  <input type="password" id="adminPass" placeholder="your admin password"/>
+
+  <button id="migrateBtn" onclick="runMigration()">Run Migration</button>
+
+  <div id="log">Waiting to start...</div>
+
+<script>
+const PRODUCTS = [
+  { name:"Custom Ceramic Mug",        price:"Rs.249", description:"High-quality ceramic mug with your favorite photo or design.",            category:"mugs",        badge:"POPULAR",      imageUrl:"https://m.media-amazon.com/images/I/61JxI4kbYsL.jpg" },
+  { name:"Magic Mug",                  price:"Rs.399", description:"Color-changing magic mug — reveals your design when filled with hot liquid!", category:"mugs",        badge:"NEW",          imageUrl:"https://cms.cloudinary.vpsvc.com/image/upload/c_scale,dpr_1.0,f_auto,q_auto:good,w_700/India%20LOB/Photo%20Gifts/Custom%20-%20Magic%20Mugs/IN_Custom-Magic-Mugs_Overview" },
+  { name:"Cotton T-Shirt",             price:"Rs.399", description:"Premium 100% cotton t-shirt with your custom design or photo. Round neck, all sizes.", category:"tshirts",    badge:"BESTSELLER",   imageUrl:"https://m.media-amazon.com/images/I/31sYpnB4ZuL._AC_UY1100_FMwebp_.jpg" },
+  { name:"Polyester T-Shirt",          price:"Rs.369", description:"Lightweight and breathable polyester t-shirt with vibrant HD printing.",  category:"tshirts",    badge:"",             imageUrl:"https://p.globalsources.com/IMAGES/PDT/B1192825941/personalized-T-shirt.jpg?ver=5885109039" },
+  { name:"Hoodie",                     price:"Rs.699", description:"Warm fleece hoodie with your custom print or embroidery. Unisex, all sizes.", category:"tshirts",   badge:"NEW",          imageUrl:"https://images-na.ssl-images-amazon.com/images/I/719Wgz6d0DL._AC_UL600_SR600,600_.jpg" },
+  { name:"Sports Jersey",              price:"Rs.449", description:"Custom printed sports jersey — ideal for teams, events and tournaments.", category:"tshirts",    badge:"NEW",          imageUrl:"https://www.nextprint.in/cdn/shop/products/202306021241468796.png?v=1685690002" },
+  { name:"Custom Printed Cap",         price:"Rs.249", description:"Stylish caps with your custom logo or name printed on the front.",        category:"caps",       badge:"",             imageUrl:"https://m.media-amazon.com/images/I/51Morq6O7TL._AC_UY1100_FMwebp_.jpg" },
+  { name:"Cushion Printing",           price:"Rs.349", description:"Soft and durable cushion covers to personalize your home decor.",         category:"homeDecor",  badge:"",             imageUrl:"https://creatoons.com/wp-content/uploads/2024/02/photo-cushion-cover-2.webp" },
+  { name:"Custom Photo Frame",         price:"Rs.349", description:"Preserve your best moments in a stylish and personalized photo frame.",   category:"homeDecor",  badge:"GIFT SPECIAL", imageUrl:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_x0QCyHgwyXP3JaWZLft3eI7bFdn_i69YeaiMUxC87UEsRFfDSRSWeTeP&s=10" },
+  { name:"Photo Slate (Stone Frame)",  price:"Rs.449", description:"Premium stone slate photo print — a unique and elegant wall decor gift.", category:"homeDecor",  badge:"NEW",          imageUrl:"https://artpix3d.com/content/products/1850247/conversions/092e3b59-43a0-426f-8e09-ca47ef53483a-thumb_1_1_750X750.jpg" },
+  { name:"Customized Bottle",          price:"Rs.299", description:"High-quality metal water bottles with your name or photo.",              category:"homeDecor",  badge:"",             imageUrl:"https://savrigifts.com/cdn/shop/files/1_45_-Photoroom_1_800x800.jpg?v=1750851272" },
+  { name:"Tumbler",                    price:"Rs.399", description:"Insulated tumbler with custom print — keeps drinks hot or cold for hours.", category:"homeDecor", badge:"NEW",         imageUrl:"https://bulktumblers.com/cdn/shop/files/40-oz-insulated-promo-stanley-style-straw-lid-charger-laser-engraved-bulk-logo-wholesale-POD-03_701x700.png?v=1699782859" },
+  { name:"Fridge Magnet",              price:"Rs.109", description:"Cute and customized fridge magnets to keep your memories on display.",   category:"homeDecor",  badge:"",             imageUrl:"https://bbdgifts.com/cdn/shop/products/2_20220825_204826_0001.png?v=1741967389" },
+  { name:"Mobile Cover",               price:"Rs.249", description:"Tough and stylish mobile back covers customized for your phone model.",   category:"covers",     badge:"",             imageUrl:"https://m.media-amazon.com/images/I/71CspETzWIL._AC_UF1000,1000_QL80_FMwebp_.jpg" },
+  { name:"Custom Keychain",            price:"Rs.129", description:"Personalized keychains available in various shapes and materials.",       category:"accessories",badge:"",             imageUrl:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRA_ZkOI6911IreNWMC2Pf32MmjYQJdm4r04KBTCig8Hiflk6UKOfQrYJxn&s=10" },
+  { name:"Custom Mouse Pad",           price:"Rs.199", description:"Smooth finish mouse pads with high-quality printing for your desk.",      category:"accessories",badge:"",             imageUrl:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtdRyKN40LgmLApi5FZtd1rob-Mh3rHdcMN8lwlw49kA&s=10" },
+  { name:"Pen Printing",               price:"Rs.99",  description:"Premium pens customized with your name or logo, perfect for gifting.",    category:"accessories",badge:"",             imageUrl:"https://www.thecountrychiccottage.net/wp-content/uploads/2023/03/sublimation-pens-15-of-22.jpg" },
+  { name:"Clock Printing",             price:"Rs.399", description:"Custom wall clock with your photo or design — a unique gift for any occasion.", category:"accessories",badge:"NEW",    imageUrl:"https://m.media-amazon.com/images/I/41p9Lj8iSWL._AC_UF894,1000_QL80_.jpg" },
+  { name:"Customized Gifts",           price:"Rs.299", description:"Personalised gift combos starting Rs.299 — perfect for birthdays, anniversaries and more.", category:"accessories",badge:"GIFT SPECIAL", imageUrl:"https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=500&q=80" },
+  { name:"Photo Puzzle",               price:"Rs.369", description:"Turn your favorite memories into a fun jigsaw puzzle for all ages.",       category:"accessories",badge:"",             imageUrl:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTe-jFhp2quN9xVsZmjw1oYv1Sr1gubeEx7WRm43T8ZLGyNxNSw-e371oax&s=10" },
+  { name:"Custom Coaster",             price:"Rs.139", description:"Durable and aesthetic coasters to protect your desk with custom designs.", category:"accessories",badge:"",             imageUrl:"https://www.yourprint.in/new-admin-ajax.php?action=resize_outer_image&cfcache=all&url=meds3/d-i-o/Coasters/coaster_MDF_square_d300_o.jpg&resizeTo=600" },
+];
+
+function log(msg, type='') {
+  const el = document.getElementById('log');
+  const cls = type ? ` class="${type}"` : '';
+  el.innerHTML += `<span${cls}>${msg}\n</span>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+async function runMigration() {
+  const workerUrl = document.getElementById('workerUrl').value.trim().replace(/\/$/, '');
+  const user      = document.getElementById('adminUser').value.trim();
+  const pass      = document.getElementById('adminPass').value;
+  const btn       = document.getElementById('migrateBtn');
+
+  if (!workerUrl || !user || !pass) {
+    log('❌ Please fill in all fields.', 'err'); return;
+  }
+
+  btn.disabled = true;
+  document.getElementById('log').innerHTML = '';
+  log('🔐 Logging in...', 'info');
+
+  // Step 1: Login
+  let token;
+  try {
+    const res  = await fetch(`${workerUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, password: pass })
+    });
+    const data = await res.json();
+    if (!data.token) { log('❌ Login failed: ' + (data.error || 'Invalid credentials'), 'err'); btn.disabled = false; return; }
+    token = data.token;
+    log('✓ Logged in successfully!', 'ok');
+  } catch (e) {
+    log('❌ Network error: ' + e.message, 'err'); btn.disabled = false; return;
+  }
+
+  // Step 2: Push products
+  log(`\n📦 Pushing ${PRODUCTS.length} products...`, 'info');
+  try {
+    const res  = await fetch(`${workerUrl}/api/admin/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(PRODUCTS)
+    });
+    const data = await res.json();
+    if (data.success) {
+      log(`✓ ${data.added} products pushed to KV!`, 'ok');
+      log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+      log('✅ MIGRATION COMPLETE!', 'ok');
+      log('', '');
+      log('NEXT STEPS:', 'info');
+      log('1. Delete migrate.html from your GitHub repo', 'info');
+      log('2. Go to your admin panel and verify products', 'info');
+      log('3. Update product images via admin panel', 'info');
+    } else {
+      log('❌ Failed: ' + (data.error || 'Unknown error'), 'err');
+    }
+  } catch (e) {
+    log('❌ Network error: ' + e.message, 'err');
+  }
+
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
