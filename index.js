@@ -291,8 +291,8 @@ async function uploadFile(request, env, folderOverride) {
     httpMetadata: { contentType: file.type },
   });
 
-  // Public URL — uses R2 public bucket URL set in env
-  const publicUrl = `${env.WORKER_URL || 'https://printmotive-worker.devpandey618.workers.dev'}/files/${key}`;
+  // Public URL via R2 custom domain
+  const publicUrl = `https://assets.psychodead.qzz.io/${key}`;
   return JSON.stringify({ success: true, url: publicUrl, key });
 }
 
