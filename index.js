@@ -292,7 +292,7 @@ async function uploadFile(request, env, folderOverride) {
   });
 
   // Public URL — uses R2 public bucket URL set in env
-  const publicUrl = `${env.R2_PUBLIC_URL}/${key}`;
+  const publicUrl = `${env.WORKER_URL}/files/${key}`;
   return JSON.stringify({ success: true, url: publicUrl, key });
 }
 
