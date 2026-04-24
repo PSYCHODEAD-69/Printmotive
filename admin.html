@@ -578,8 +578,63 @@
 <!-- TOAST -->
 <div class="adm-toast" id="admToast"></div>
 
+<!-- CUSTOM DELETE CONFIRM MODAL -->
+<div class="del-modal-backdrop" id="delModal">
+  <div class="del-modal-box">
+    <div class="del-modal-icon">🗑️</div>
+    <div class="del-modal-title" id="delModalTitle">Delete Item?</div>
+    <div class="del-modal-msg" id="delModalMsg">This action cannot be undone.</div>
+    <div class="del-modal-btns">
+      <button class="del-btn-cancel" onclick="closeDelModal()">Cancel</button>
+      <button class="del-btn-confirm" id="delBtnConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.del-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.75);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 600; opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+.del-modal-backdrop.open { opacity: 1; pointer-events: all; }
+.del-modal-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 2rem 1.8rem;
+  width: 100%; max-width: 340px; text-align: center;
+  transform: scale(.92); transition: transform .2s;
+}
+.del-modal-backdrop.open .del-modal-box { transform: scale(1); }
+.del-modal-icon { font-size: 2.5rem; margin-bottom: .8rem; }
+.del-modal-title {
+  font-family: var(--font-display); font-size: 1.3rem;
+  margin-bottom: .5rem; color: var(--text);
+}
+.del-modal-msg {
+  font-size: .9rem; color: var(--muted); margin-bottom: 1.8rem; line-height: 1.5;
+}
+.del-modal-btns { display: flex; gap: 10px; }
+.del-btn-cancel {
+  flex: 1; padding: 12px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 12px;
+  color: var(--text); font-family: var(--font-body);
+  font-size: .95rem; cursor: pointer; transition: background .15s;
+}
+.del-btn-cancel:hover { background: var(--border); }
+.del-btn-confirm {
+  flex: 1; padding: 12px; background: var(--red);
+  border: none; border-radius: 12px;
+  color: white; font-family: var(--font-body);
+  font-size: .95rem; font-weight: 700; cursor: pointer;
+  transition: opacity .15s;
+}
+.del-btn-confirm:hover { opacity: .85; }
+</style>
+
 <script>
-const API = 'https://printmotive-worker.devpandey618.workers.dev';
+const API = 'REPLACE_WITH_WORKER_URL';
 let token = '';
 
 /* ══════════════════════════════
@@ -934,12 +989,13 @@ async function saveEditProduct() {
 }
 
 async function deleteProduct(id, name) {
-  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-  try {
-    const res = await apiFetch(`/api/admin/products/${id}`, 'DELETE');
-    if (res.success) { showAdmToast('✓ Product deleted!', 'success'); allProducts = []; loadProducts(); }
-    else showAdmToast(res.error || 'Delete failed', 'error');
-  } catch { showAdmToast('Network error', 'error'); }
+  showDelModal(`Delete "${name}"?`, 'This will permanently remove the product and its image.', async () => {
+    try {
+      const res = await apiFetch(`/api/admin/products/${id}`, 'DELETE');
+      if (res.success) { showAdmToast('✓ Product deleted!', 'success'); allProducts = []; loadProducts(); }
+      else showAdmToast(res.error || 'Delete failed', 'error');
+    } catch { showAdmToast('Network error', 'error'); }
+  });
 }
 
 /* ══════════════════════════════
@@ -984,12 +1040,13 @@ async function loadOrders() {
 }
 
 async function deleteOrder(id) {
-  if (!confirm('Delete this order record?')) return;
-  try {
-    const res = await apiFetch(`/api/admin/orders/${id}`, 'DELETE');
-    if (res.success) { showAdmToast('✓ Order deleted', 'success'); loadOrders(); }
-    else showAdmToast(res.error || 'Delete failed', 'error');
-  } catch { showAdmToast('Network error', 'error'); }
+  showDelModal('Delete this order?', 'Order record will be permanently removed.', async () => {
+    try {
+      const res = await apiFetch(`/api/admin/orders/${id}`, 'DELETE');
+      if (res.success) { showAdmToast('✓ Order deleted', 'success'); loadOrders(); }
+      else showAdmToast(res.error || 'Delete failed', 'error');
+    } catch { showAdmToast('Network error', 'error'); }
+  });
 }
 
 /* ══════════════════════════════
@@ -1029,12 +1086,13 @@ async function loadReviews() {
 }
 
 async function deleteReview(id) {
-  if (!confirm('Delete this review?')) return;
-  try {
-    const res = await apiFetch(`/api/admin/reviews/${id}`, 'DELETE');
-    if (res.success) { showAdmToast('✓ Review deleted', 'success'); loadReviews(); }
-    else showAdmToast(res.error || 'Delete failed', 'error');
-  } catch { showAdmToast('Network error', 'error'); }
+  showDelModal('Delete this review?', 'Review and any attached media will be permanently removed.', async () => {
+    try {
+      const res = await apiFetch(`/api/admin/reviews/${id}`, 'DELETE');
+      if (res.success) { showAdmToast('✓ Review deleted', 'success'); loadReviews(); }
+      else showAdmToast(res.error || 'Delete failed', 'error');
+    } catch { showAdmToast('Network error', 'error'); }
+  });
 }
 
 /* ══════════════════════════════
@@ -1079,9 +1137,30 @@ function showAdmToast(msg, type = '') {
   _toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// Close edit modal on backdrop click
-document.getElementById('editModal').addEventListener('click', function(e) {
-  if (e.target === this) closeEditModal();
+/* ══════════════════════════════
+   CUSTOM DELETE MODAL
+══════════════════════════════ */
+let _delCallback = null;
+function showDelModal(title, msg, onConfirm) {
+  document.getElementById('delModalTitle').textContent = title;
+  document.getElementById('delModalMsg').textContent   = msg;
+  _delCallback = onConfirm;
+  document.getElementById('delModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDelModal() {
+  document.getElementById('delModal').classList.remove('open');
+  document.body.style.overflow = '';
+  _delCallback = null;
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('delBtnConfirm').addEventListener('click', () => {
+    closeDelModal();
+    if (_delCallback) _delCallback();
+  });
+  document.getElementById('delModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDelModal();
+  });
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEditModal(); });
 
