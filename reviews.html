@@ -163,7 +163,7 @@
     }
   </style>
 </head>
-<body>
+<body style="background:#f5f2ec;">
 
   <!-- FLOATING WHATSAPP -->
   <a href="#" class="float-wa" id="floatWA" title="Order on WhatsApp">
@@ -180,7 +180,7 @@
     <ul class="nav-links">
       <li><a href="index.html#products">Products</a></li>
       <li><a href="index.html#how">Process</a></li>
-      <li><a href="reviews.html" style="color:var(--accent)">Reviews</a></li>
+      <li><a href="reviews.html" style="color:#ff4d2e">Reviews</a></li>
       <li><a href="index.html#contacts">Contact us</a></li>
       <li><a href="index.html#products" class="nav-cta">Order Now</a></li>
     </ul>
@@ -219,7 +219,7 @@
 
       <!-- Star Rating -->
       <div style="margin-bottom:1rem;">
-        <label style="font-size:.9rem;color:var(--muted);display:block;margin-bottom:6px;">Your Rating *</label>
+        <label style="font-size:.9rem;color:#888;display:block;margin-bottom:6px;">Your Rating *</label>
         <div class="star-picker" id="starPicker">
           <span class="sp" data-val="1">★</span>
           <span class="sp" data-val="2">★</span>
@@ -275,7 +275,7 @@
 
     <!-- Bottom CTA -->
     <div class="reviews-cta-bottom">
-      <p style="color:var(--muted);margin-bottom:1rem;">Had a great experience? Let others know!</p>
+      <p style="color:#888;margin-bottom:1rem;">Had a great experience? Let others know!</p>
       <button class="btn-primary" onclick="scrollToForm()" style="display:inline-flex;align-items:center;gap:8px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="17" height="17"><path d="M12 5v14M5 12h14"/></svg>
         Add Your Review
@@ -376,7 +376,7 @@
             ? `<video src="${url}" muted style="width:56px;height:56px;object-fit:cover;border-radius:8px;"></video>`
             : `<img src="${url}" alt="preview" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">`}
           <span class="fpi-name">${file.name}</span>
-          <span style="font-size:.78rem;color:var(--muted);flex-shrink:0;">${(file.size/1024/1024).toFixed(1)}MB</span>
+          <span style="font-size:.78rem;color:#888;flex-shrink:0;">${(file.size/1024/1024).toFixed(1)}MB</span>
           <button class="fpi-remove" onclick="removeFile(${idx})">✕</button>
         `;
         wrap.appendChild(item);
@@ -530,7 +530,7 @@
       }
 
       return `
-        <div class="review-card fade-up" data-review-id="${r.id}">
+        <div class="review-card" data-review-id="${r.id}">
           <div class="rc-stars">${stars}</div>
           ${mediaHtml}
           <p class="rc-text">"${escapeHtml(r.text)}"</p>
