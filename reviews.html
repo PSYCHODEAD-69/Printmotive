@@ -8,25 +8,37 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css"/>
   <style>
-    /* ── REVIEWS PAGE SPECIFIC ── */
+    /* ── REVIEWS PAGE — hardcoded light theme colors ── */
+    :root {
+      --rv-bg:      #f5f2ec;
+      --rv-surface: #ffffff;
+      --rv-border:  #e8e4da;
+      --rv-text:    #1a1714;
+      --rv-muted:   #888;
+      --rv-accent:  #ff4d2e;
+      --rv-font-d:  'Playfair Display', serif;
+      --rv-font-b:  'DM Sans', sans-serif;
+    }
+
     .reviews-page-hero {
       padding: 120px 5vw 60px;
-      background: var(--bg);
+      background: var(--rv-bg);
       text-align: center;
     }
     .reviews-page-hero .sec-tag { margin: 0 auto 12px; }
-    .reviews-page-hero h1 { font-family: var(--font-display); font-size: clamp(2rem,5vw,3.5rem); margin: 0 0 12px; }
-    .reviews-page-hero p { color: var(--muted); font-size: 1.05rem; }
+    .reviews-page-hero h1 { font-family: var(--rv-font-d); font-size: clamp(2rem,5vw,3.5rem); margin: 0 0 12px; color: var(--rv-text); }
+    .reviews-page-hero p { color: var(--rv-muted); font-size: 1.05rem; }
 
     /* ── ADD REVIEW FORM ── */
     .add-review-section {
-      background: var(--surface);
+      background: var(--rv-surface);
       border-radius: 20px;
       padding: 2.5rem;
       max-width: 640px;
       margin: 0 auto 3rem;
+      border: 1px solid var(--rv-border);
     }
-    .add-review-section h2 { font-family: var(--font-display); font-size: 1.6rem; margin: 0 0 1.5rem; }
+    .add-review-section h2 { font-family: var(--rv-font-d); font-size: 1.6rem; margin: 0 0 1.5rem; color: var(--rv-text); }
 
     .star-picker { display: flex; gap: 8px; margin-bottom: 1.2rem; }
     .star-picker .sp { font-size: 2rem; cursor: pointer; color: #ddd; transition: color .15s, transform .15s; line-height:1; user-select:none; }
@@ -34,44 +46,44 @@
 
     .rev-input {
       width: 100%; box-sizing: border-box;
-      background: var(--bg); border: 1.5px solid var(--border);
+      background: var(--rv-bg); border: 1.5px solid var(--rv-border);
       border-radius: 10px; padding: 12px 14px;
-      font-family: var(--font-body); font-size: 0.95rem;
-      color: var(--text); outline: none; transition: border-color .2s;
+      font-family: var(--rv-font-b); font-size: 0.95rem;
+      color: var(--rv-text); outline: none; transition: border-color .2s;
       margin-bottom: 1rem;
     }
-    .rev-input:focus { border-color: var(--accent); }
+    .rev-input:focus { border-color: var(--rv-accent); }
     textarea.rev-input { resize: vertical; min-height: 90px; }
 
     .file-upload-area {
-      border: 2px dashed var(--border); border-radius: 12px;
+      border: 2px dashed var(--rv-border); border-radius: 12px;
       padding: 1.5rem; text-align: center; cursor: pointer;
       transition: border-color .2s, background .2s; margin-bottom: 1rem;
-      background: var(--bg);
+      background: var(--rv-bg);
     }
-    .file-upload-area:hover { border-color: var(--accent); background: rgba(255,77,46,.04); }
-    .file-upload-area.drag-over { border-color: var(--accent); background: rgba(255,77,46,.08); }
+    .file-upload-area:hover { border-color: var(--rv-accent); background: rgba(255,77,46,.04); }
+    .file-upload-area.drag-over { border-color: var(--rv-accent); background: rgba(255,77,46,.08); }
     .file-upload-area input { display: none; }
     .file-upload-area .fup-icon { font-size: 2rem; margin-bottom: 8px; }
-    .file-upload-area .fup-text { font-size: 0.9rem; color: var(--muted); }
-    .file-upload-area .fup-text span { color: var(--accent); font-weight: 600; }
+    .file-upload-area .fup-text { font-size: 0.9rem; color: var(--rv-muted); }
+    .file-upload-area .fup-text span { color: var(--rv-accent); font-weight: 600; }
 
     .file-preview-wrap { margin-bottom: 1rem; }
     .file-preview-item {
       display: flex; align-items: center; gap: 10px;
-      background: var(--bg); border: 1px solid var(--border);
+      background: var(--rv-bg); border: 1px solid var(--rv-border);
       border-radius: 10px; padding: 10px 14px; margin-bottom: 8px;
     }
     .file-preview-item img, .file-preview-item video {
       width: 56px; height: 56px; object-fit: cover; border-radius: 8px; flex-shrink: 0;
     }
-    .fpi-name { flex: 1; font-size: 0.88rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fpi-name { flex: 1; font-size: 0.88rem; color: var(--rv-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .fpi-remove { background: none; border: none; color: #f44; cursor: pointer; font-size: 1.2rem; padding: 0 4px; }
 
     .submit-review-btn {
-      width: 100%; padding: 14px; background: var(--accent);
+      width: 100%; padding: 14px; background: var(--rv-accent);
       color: white; border: none; border-radius: 12px;
-      font-family: var(--font-body); font-size: 1rem; font-weight: 700;
+      font-family: var(--rv-font-b); font-size: 1rem; font-weight: 700;
       cursor: pointer; transition: opacity .2s, transform .1s;
     }
     .submit-review-btn:hover { opacity: .88; }
@@ -79,8 +91,8 @@
     .submit-review-btn:disabled { opacity: .5; cursor: not-allowed; }
 
     /* ── ALL REVIEWS GRID ── */
-    .all-reviews-section { max-width: 1100px; margin: 0 auto; padding: 0 5vw 4rem; }
-    .all-reviews-section h2 { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 2rem; }
+    .all-reviews-section { max-width: 1100px; margin: 0 auto; padding: 0 5vw 4rem; background: var(--rv-bg); }
+    .all-reviews-section h2 { font-family: var(--rv-font-d); font-size: 1.8rem; margin-bottom: 2rem; color: var(--rv-text); }
 
     .reviews-grid {
       display: grid;
@@ -89,23 +101,23 @@
     }
 
     .review-card {
-      background: var(--surface); border-radius: 16px;
-      padding: 1.5rem; border: 1px solid var(--border);
+      background: var(--rv-surface); border-radius: 16px;
+      padding: 1.5rem; border: 1px solid var(--rv-border);
       transition: transform .2s, box-shadow .2s;
     }
     .review-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,.08); }
 
     .rc-stars { color: #f5a623; font-size: 1.1rem; margin-bottom: 8px; letter-spacing: 2px; }
-    .rc-text { font-size: 0.95rem; color: var(--text); line-height: 1.6; margin-bottom: 1rem; }
+    .rc-text { font-size: 0.95rem; color: var(--rv-text); line-height: 1.6; margin-bottom: 1rem; }
     .rc-author { display: flex; align-items: center; gap: 10px; }
     .rc-av {
       width: 38px; height: 38px; border-radius: 50%;
-      background: var(--accent); color: white; display: flex;
+      background: var(--rv-accent); color: white; display: flex;
       align-items: center; justify-content: center;
       font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
     }
-    .rc-name { font-weight: 600; font-size: 0.9rem; }
-    .rc-date { font-size: 0.78rem; color: var(--muted); }
+    .rc-name { font-weight: 600; font-size: 0.9rem; color: var(--rv-text); }
+    .rc-date { font-size: 0.78rem; color: var(--rv-muted); }
 
     /* Media preview in review card */
     .rc-media { margin-bottom: 1rem; border-radius: 12px; overflow: hidden; }
@@ -132,17 +144,17 @@
 
     /* Upload progress */
     .upload-progress { margin-bottom: 1rem; }
-    .up-bar-wrap { background: var(--border); border-radius: 8px; height: 6px; overflow: hidden; }
-    .up-bar { height: 100%; background: var(--accent); border-radius: 8px; transition: width .3s; width: 0%; }
-    .up-label { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+    .up-bar-wrap { background: var(--rv-border); border-radius: 8px; height: 6px; overflow: hidden; }
+    .up-bar { height: 100%; background: var(--rv-accent); border-radius: 8px; transition: width .3s; width: 0%; }
+    .up-label { font-size: 0.82rem; color: var(--rv-muted); margin-top: 4px; }
 
     /* Loading states */
-    .reviews-loading { text-align: center; padding: 3rem; color: var(--muted); }
-    .no-reviews { text-align: center; padding: 3rem; color: var(--muted); }
+    .reviews-loading { text-align: center; padding: 3rem; color: var(--rv-muted); }
+    .no-reviews { text-align: center; padding: 3rem; color: var(--rv-muted); }
 
     .reviews-cta-bottom {
       text-align: center; margin-top: 3rem; padding-top: 2rem;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid var(--rv-border);
     }
 
     @media (max-width: 600px) {
@@ -278,7 +290,7 @@
   </div>
 
   <script>
-    const API = window.PM_API_URL || 'https://printmotive-worker.devpandey618.workers.dev';
+    const API = window.PM_API_URL || 'REPLACE_WITH_WORKER_URL';
     let selectedRating = 0;
     let selectedFiles  = [];
 
