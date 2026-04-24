@@ -9,7 +9,7 @@ const BRAND_NAME = "PrintMotive.in";
 const WEBSITE    = "printmotive.in";
 
 /* ── API URL — Replace with your Cloudflare Worker URL ── */
-const PM_API = "REPLACE_WITH_WORKER_URL";
+const PM_API = "https://printmotive-worker.devpandey618.workers.dev";
 
 /* ══════════════════════════════════════
    PRODUCTS — Dynamic load from API
