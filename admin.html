@@ -1151,26 +1151,36 @@ function showDelModal(title, msg, onConfirm) {
 function closeDelModal() {
   document.getElementById('delModal').classList.remove('open');
   document.body.style.overflow = '';
-  _delCallback = null;
 }
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('delBtnConfirm').addEventListener('click', () => {
-    closeDelModal();
-    if (_delCallback) _delCallback();
-  });
-  document.getElementById('delModal').addEventListener('click', function(e) {
-    if (e.target === this) closeDelModal();
-  });
-});
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEditModal(); });
 
 /* ══════════════════════════════
    BOOT
 ══════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
-  // Enter key on login
   document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
+
+  // Delete modal confirm button
+  document.getElementById('delBtnConfirm').addEventListener('click', () => {
+    const cb = _delCallback;
+    _delCallback = null;
+    closeDelModal();
+    if (cb) cb();
+  });
+
+  // Close delete modal on backdrop click
+  document.getElementById('delModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDelModal();
+  });
+
+  // Close edit modal on backdrop click
+  document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeEditModal(); closeDelModal(); }
 });
 </script>
 </body>
